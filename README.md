@@ -9,7 +9,7 @@
 
 <p align="center">
   <a href="https://neurips.cc/virtual/2026/loc/sydney/poster/151076"><img src="https://img.shields.io/badge/NeurIPS-2026%20Poster-008080?style=flat-square" alt="NeurIPS 2026 Poster"></a>
-  <a href="https://arxiv.org/pdf/2610.12393"><img src="https://img.shields.io/badge/arXiv-2610.12393-B31B1B?style=flat-square" alt="Paper on arXiv"></a>
+  <a href="https://arxiv.org/abs/2610.12393"><img src="https://img.shields.io/badge/arXiv-2610.12393-B31B1B?style=flat-square" alt="Paper on arXiv"></a>
   <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-2.1.0-EE4C2C?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch 2.1.0"></a>
 </p>
 
