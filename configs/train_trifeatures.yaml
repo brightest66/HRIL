@@ -1,0 +1,81 @@
+seed: 42
+mode: train
+trainer:
+  _target_: pytorch_lightning.Trainer
+  accelerator: auto
+  strategy: ddp_find_unused_parameters_true
+  devices: 1
+  num_nodes: 1
+  max_epochs: 100
+  default_root_dir: .
+  use_distributed_sampler: false
+  deterministic: false
+  check_val_every_n_epoch: 1
+  num_sanity_val_steps: 1
+  inference_mode: false
+optim:
+  lr: 0.0003
+  weight_decay: 0.0001
+model:
+  encoders:
+  - _target_: models.alexnet.AlexNetEncoder
+    latent_dim: 256
+    dropout: 0.5
+    global_pool: ''
+  - _target_: models.alexnet.AlexNetEncoder
+    latent_dim: 256
+    dropout: 0.5
+    global_pool: ''
+  adapters:
+  - _target_: models.input_adapters.PatchedInputAdapter
+    num_channels: 256
+    stride_level: 1
+    patch_size_full: 1
+    dim_tokens: 512
+    image_size: 6
+  - _target_: models.input_adapters.PatchedInputAdapter
+    num_channels: 256
+    stride_level: 1
+    patch_size_full: 1
+    dim_tokens: 512
+    image_size: 6
+  name: HRIL
+  model:
+    _target_: pl_modules.hril.HRIL
+    encoder:
+      _target_: models.mmfusion.MMFusion
+      embed_dim: 512
+      fusion: concat
+      pool: cls
+      n_heads: 8
+      n_layers: 1
+      add_bias_kv: false
+      dropout: 0
+    projection:
+      _target_: pl_modules.hril.HRIL._build_mlp
+      in_dim: ${model.model.encoder.embed_dim}
+      mlp_dim: 512
+      out_dim: 256
+    loss_kwargs:
+      temperature: 0.1
+      w_synergy: 3
+      w_align: 20
+      target: 0.5
+      cov_target: 0.5
+      r: 24
+      proj_seed: ${seed}
+      proj_dim: 24
+      hoidp_detach: false
+      use_infonce: true
+linear_probing:
+  _target_: evaluation.linear_probe.LinearProbingCallback
+  val_loaders: false
+ckpt_path: null
+defaults:
+- data: trifeatures
+- model: hril
+- _self_
+exp_name: seed_${seed}
+hydra:
+  job:
+    chdir: false

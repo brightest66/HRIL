@@ -1,0 +1,28 @@
+name: HRIL
+model:
+  _target_: pl_modules.hril.HRIL
+  encoder:
+    _target_: models.mmfusion.MMFusion
+    embed_dim: 40
+    fusion: concat
+    pool: cls
+    n_heads: 8
+    n_layers: 1
+    add_bias_kv: false
+    dropout: 0
+  projection:
+    _target_: pl_modules.hril.HRIL._build_mlp
+    in_dim: ${model.model.encoder.embed_dim}
+    mlp_dim: 512
+    out_dim: 256
+  loss_kwargs:
+    temperature: 0.1
+    r: 24
+    cov_target: 0.5
+    w_synergy: 1
+    target: 0.3
+    w_align: 5
+    proj_dim: 24
+    proj_seed: 42
+    hoidp_detach: false
+    use_infonce: true

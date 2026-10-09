@@ -1,0 +1,155 @@
+seed: 42
+mode: train
+trainer:
+  _target_: pytorch_lightning.Trainer
+  accelerator: auto
+  strategy: ddp_find_unused_parameters_false
+  devices: 1
+  num_nodes: 1
+  max_epochs: 100
+  default_root_dir: .
+  use_distributed_sampler: false
+  deterministic: false
+  inference_mode: false
+optim:
+  lr: 0.001
+  weight_decay: 0.01
+model:
+  model:
+    encoder:
+      n_layers: 1
+    loss_kwargs:
+      w_synergy: 1
+      target: 0.3
+      w_align: 5
+linear_probing:
+  _target_: evaluation.linear_probe.LinearProbingCallback
+  use_sklearn: false
+  fastsearch: false
+  logging_level: INFO
+  frequency: by_epoch
+mosi:
+  modalities:
+  - vision
+  - text
+  task: classification
+  kwargs:
+    augmentations: drop+noise
+  encoders:
+  - _target_: models.transformer.Transformer
+    n_features: 20
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  - _target_: models.transformer.Transformer
+    n_features: 300
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  adapters:
+  - null
+  - null
+ckpt_path: null
+defaults:
+- data: multibench
+- model: hril
+- _self_
+exp_name: seed_${seed}
+hydra:
+  job:
+    chdir: false
+mimic:
+  modalities:
+  - tabular
+  - timeseries
+  task: 7
+  kwargs:
+    augmentations:
+    - noise
+    - drop+noise
+  encoders:
+  - _target_: models.mlp.MLP
+    indim: 5
+    hiddim: 10
+    outdim: 10
+    dropout: false
+  - _target_: models.gru.GRU
+    indim: 12
+    hiddim: 512
+    dropout: false
+    batch_first: true
+  adapters:
+  - _target_: models.input_adapters.FeaturesInputAdapter
+    n_features: 10
+    dim_tokens: 512
+  - null
+humor:
+  modalities:
+  - vision
+  - text
+  task: classification
+  kwargs:
+    augmentations: drop+noise
+  encoders:
+  - _target_: models.transformer.Transformer
+    n_features: 371
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  - _target_: models.transformer.Transformer
+    n_features: 300
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  adapters:
+  - null
+  - null
+sarcasm:
+  modalities:
+  - vision
+  - text
+  task: classification
+  kwargs:
+    augmentations: drop+noise
+  encoders:
+  - _target_: models.transformer.Transformer
+    n_features: 371
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  - _target_: models.transformer.Transformer
+    n_features: 300
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  adapters:
+  - null
+  - null
+visionandtouch-bin:
+  modalities:
+  - image
+  - proprio
+  task: contact_next
+  kwargs:
+    augmentations:
+    - simclr
+    - noise
+  encoders:
+  - _target_: timm.create_model
+    model_name: resnet18
+    pretrained: false
+    num_classes: 0
+    global_pool: ''
+  - _target_: models.robotics.ProprioEncoder
+    z_dim: 512
+  adapters:
+  - _target_: models.input_adapters.PatchedInputAdapter
+    num_channels: 512
+    stride_level: 1
+    patch_size_full: 1
+    dim_tokens: 512
+    image_size: 4
+  - _target_: models.input_adapters.SimpleFeaturesInputAdapter
+data:
+  data_module:
+    dataset: mosi

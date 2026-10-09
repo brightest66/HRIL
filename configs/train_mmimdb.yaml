@@ -1,0 +1,88 @@
+seed: 42
+mode: train
+trainer:
+  _target_: pytorch_lightning.Trainer
+  accelerator: auto
+  strategy: ddp_find_unused_parameters_false
+  devices: 1
+  num_nodes: 1
+  max_epochs: 70
+  default_root_dir: .
+  use_distributed_sampler: false
+  deterministic: false
+  check_val_every_n_epoch: 1
+  num_sanity_val_steps: 0
+  inference_mode: false
+optim:
+  lr: 0.001
+  weight_decay: 0.01
+  lr_scheduler:
+    final_value: 1.0e-06
+    epochs: 70
+    warmup_epochs: 10
+    start_warmup_value: 1.0e-06
+model:
+  name: HRIL
+  model:
+    _target_: pl_modules.hril.HRIL
+    encoder:
+      _target_: models.mmfusion.MMFusion
+      embed_dim: 768
+      fusion: concat
+      pool: cls
+      n_heads: 8
+      n_layers: 1
+      add_bias_kv: false
+      dropout: 0
+    projection:
+      _target_: pl_modules.hril.HRIL._build_mlp
+      in_dim: ${model.model.encoder.embed_dim}
+      mlp_dim: 512
+      out_dim: 256
+    loss_kwargs:
+      temperature: 0.2
+      r: 24
+      cov_target: 0.5
+      w_synergy: 5
+      target: 0.3
+      w_align: 5
+      proj_dim: 24
+      proj_seed: 42
+      hoidp_detach: false
+      use_infonce: true
+linear_probing:
+  _target_: evaluation.linear_probe.LinearProbingCallback
+  multilabel: true
+  use_sklearn: true
+  fastsearch: true
+  logging_level: INFO
+  frequency: by_epoch
+mmimdb:
+  modalities:
+  - vision
+  - text
+  encoders:
+  - _target_: models.vit.VisionTransformer
+    model_name: vit_base_patch32_clip_224.openai
+    pretrained: true
+    output_value: token_embeddings
+    freeze: true
+  - _target_: models.transformer.LanguageEncoder
+    model_name: clip-ViT-B-32-multilingual-v1
+    output_value: token_embeddings
+    normalize_embeddings: true
+    use_dataset_cache: false
+    freeze: true
+    mask_prob: 0.15
+  adapters:
+  - null
+  - null
+ckpt_path: null
+defaults:
+- data: mmimdb
+- model: hril
+- _self_
+exp_name: seed_${seed}
+hydra:
+  job:
+    chdir: false

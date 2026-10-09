@@ -1,0 +1,126 @@
+seed: 42
+mode: train
+trainer:
+  _target_: pytorch_lightning.Trainer
+  accelerator: auto
+  strategy: ddp_find_unused_parameters_false
+  devices: 1
+  num_nodes: 1
+  max_epochs: 100
+  default_root_dir: .
+  use_distributed_sampler: false
+  deterministic: false
+  inference_mode: false
+optim:
+  lr: 0.001
+  weight_decay: 0.01
+model:
+  model:
+    encoder:
+      n_layers: 2
+    loss_kwargs:
+      w_synergy: 3
+      target: 0.5
+      w_align: 10
+linear_probing:
+  _target_: evaluation.linear_probe.LinearProbingCallback
+  use_sklearn: false
+  fastsearch: false
+  logging_level: INFO
+  frequency: by_epoch
+humor:
+  modalities:
+  - vision
+  - text
+  - audio
+  task: classification
+  kwargs:
+    augmentations: drop+noise
+  encoders:
+  - _target_: models.transformer.Transformer
+    n_features: 371
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  - _target_: models.transformer.Transformer
+    n_features: 300
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  - _target_: models.transformer.Transformer
+    n_features: 81
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  adapters:
+  - null
+  - null
+  - null
+ckpt_path: null
+defaults:
+- data: multibench
+- model: hril
+- _self_
+exp_name: seed_${seed}
+hydra:
+  job:
+    chdir: false
+mosi:
+  modalities:
+  - vision
+  - text
+  - audio
+  task: classification
+  kwargs:
+    augmentations: drop+noise
+  encoders:
+  - _target_: models.transformer.Transformer
+    n_features: 20
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  - _target_: models.transformer.Transformer
+    n_features: 300
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  - _target_: models.transformer.Transformer
+    n_features: 5
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  adapters:
+  - null
+  - null
+  - null
+mosei:
+  modalities:
+  - vision
+  - text
+  - audio
+  task: classification
+  kwargs:
+    augmentations: drop+noise
+  encoders:
+  - _target_: models.transformer.Transformer
+    n_features: 35
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  - _target_: models.transformer.Transformer
+    n_features: 300
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  - _target_: models.transformer.Transformer
+    n_features: 74
+    dim: 40
+    max_seq_length: 50
+    positional_encoding: false
+  adapters:
+  - null
+  - null
+  - null
+data:
+  data_module:
+    dataset: humor
